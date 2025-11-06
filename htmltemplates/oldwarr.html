@@ -1,0 +1,153 @@
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .a4-wrapper {
+        height: 1100px;
+        box-sizing: border-box;
+    }
+
+    .a4-container {
+        height: 297mm;
+        /* full page height */
+        width: 210mm;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        /* border: 2px solid #000; */
+        /* full page border */
+        padding: 20px 40px;
+    }
+
+    .content {
+        flex: 1;
+        /* let it take needed space  */
+    }
+</style>
+<div class="a4-container">
+    <div class="content">
+        <table border="0" align="center" style="border: 2px solid #000; padding: 0px 40px;  font-size: 14px;"
+            cellpadding="5" width="700"  height="1080px" cellspacing="0">
+            <!-- height="1100px" -->
+
+            <tr>
+                <td width="50%"><img src="{{logo_base64}}" width="80"></td>
+                <td width="50%" align="right"><img src="{{hiker_logo_base64}}" width="100"></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center; font-weight: bold; height: 40px;" valign="top">Warranty
+                    Registration Certificate</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    Dear Customer,
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    Thank you for purchasing ‘Hiker by Varroc’ Battery.
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    It is our privilege to have you as a member of Varroc Family. We are committed to providing you with
+                    the best of the
+                    products and services.
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    This is a Paperless Warranty Registration Certificate based on the data provided by you.
+                </td>
+            </tr>
+            <tr>
+                <td style="height: 10px;" valign="top"></td>
+            </tr>
+            <!-- <tr>
+                <td colspan="2" style="font-weight: bold;font-size: 19px;">Given below are the details for your reference.</td>
+            </tr> -->
+            <tr>
+                <td colspan="2">
+                    <table width="100%" style="border: 1px solid #ccc; padding: 10px " cellpadding="5">
+                        <tr>
+                            <td colspan="2" height="40" valign="top" style="font-weight: bold;font-size: 19px;">Given
+                                below are the details for your reference.</td>
+                        </tr>
+                        <tr>
+                            <td>Customer Name: <br><b>{{customer_name}}</b></td>
+                            <td>Reference ID: <br><b>{{reference_id}}</b></td>
+                        </tr>
+                        <tr>
+                            <td>Mobile Number:<br><b>{{phone_no}}</b></td>
+                            <td>Purchase Date: <br><b>{{purchase_date}}</b></td>
+
+
+                        </tr>
+                        <tr>
+                            <td>PIN Code:<br> <b>{{pin_code}}</b></td>
+                            <td>Request Date: <br><b>{{request_date}}</b></td>
+                        </tr>
+                        <tr>
+                            <td>City: <br><b>{{city}}</b></td><br><br>
+
+                        </tr>
+                        <tr>
+                            <td colspan="2">Retailer Shop Name:<br>
+                                <b>{{retailer_shop_name}}</b>
+                            </td>
+                            <!-- <td>Registration Date: <b>23rd June 2025</b></td> -->
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td height="20"></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <table border="1" width="100%" style="border: 1px solid #ccc;" cellspacing="1" cellpadding="10">
+                        <tr style="font-weight: bold;">
+                            <td>Model (Part Number)</td>
+                            <td>Model Description</td>
+                            <td>Serial Number</td>
+                            <td>FOC Warranty Period</td>
+                            <td>Pro-rata Warranty Period</td>
+                        </tr>
+                        <tr>
+                            <td>{{varroc_part_code}}</td>
+                            <td>{{description}}</td>
+                            <td>{{battery_serial_no}}</td>
+                            <td>{{warranty_start_date}}-{{warranty_end_date}}</td>
+                            <td>18 months</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <b>Note:</b><br>
+                    All Terms and Conditions as given in the Warranty Card will be applicable.
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <b>Corporate Office:</b><br>
+                    Varroc Aftermarket Division (AMD)<br>
+                    B–22/1, FIVE STAR MIDC, Shendra, Chhatrapati Sambhajinagar (Aurangabad), Maharashtra, PIN code:
+                    431154<br>
+                    Ph. + 91 9271198337
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+            </tr>
+        </table>
+    </div>
+</div>

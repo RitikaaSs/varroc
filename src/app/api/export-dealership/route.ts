@@ -1,0 +1,192 @@
+import { funSendApiException } from "@/app/pro_utils/const_functions";
+import { RowDataPacket } from "mysql2";
+import { NextRequest, NextResponse } from "next/server";
+import Papa from "papaparse";
+import pool from "../../../../utils/db";
+import moment from "moment";
+
+
+export async function POST(req: NextRequest) {
+
+
+  const authHeader = req.headers.get('Authorization');
+  const token = authHeader?.split(' ')[1]; // 'Bearer your-token'
+
+  if (!token || token !== process.env.NEXT_PUBLIC_API_SECRET_TOKEN) {
+    return NextResponse.json({ error: 'Unauthorized',message:"You are unauthorized" }, { status: 403 });
+  }
+    const body = await req.json();
+    const { date,enquiry_id,whatsapp_no,status,city,state_address  } = body;
+    
+    try{
+        const connection = await pool.getConnection();
+   
+        let query = `
+              SELECT 
+          udr.pk_deal_id,
+          udr.dealership_id,
+          udr.full_name,
+          udr.alternate_contact,
+          udr.pincode,
+          udr.city,
+          udr.state_address,
+          udr.business_age,
+          udr.shop_type,
+          udr.addressed_by,
+          udr.raised_whatsapp_no,
+          udr.created_at AS ucr_created_at,
+          udr.updated_at AS ucr_updated_at,
+
+            rs.status AS request_status
+          FROM user_dealership_request udr
+          JOIN request_status rs ON udr.status_id = rs.status_id
+      `;
+
+    // Dynamic WHERE conditions
+    const conditions: string[] = [];
+    const values: any[] = [];
+
+    if (date) {
+      conditions.push(`DATE(udr.created_at) = ?`);
+      values.push(date); // should be in 'YYYY-MM-DD' format
+    }
+
+    if (enquiry_id) {
+      conditions.push(`udr.dealership_id = ?`);
+      values.push(enquiry_id);
+    }
+
+    if (whatsapp_no) {
+      conditions.push(`udr.alternate_contact like ?`);
+      values.push(`%${whatsapp_no}%`);
+    }
+
+    if (state_address) {
+      conditions.push(`udr.state_address like ?`);
+      values.push(`%${state_address}%`);
+    }
+    if (city) {
+      conditions.push(`udr.city like ?`);
+      values.push(`%${city}%`);
+    }
+
+    if (status) {
+      conditions.push(`udr.status_id = ?`);
+      values.push(status);
+    }
+   
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(" AND ");
+    }
+
+    query += ` ORDER BY udr.created_at ASC`;
+
+    const [userRequests] = await connection.execute<RowDataPacket[]>(query, values);
+    console.log("all user request data",userRequests);
+    
+    const enrichedRequests = await Promise.all(
+      userRequests.map(async (request: any) => {
+        // Example: Get battery info for each request
+        let addressedQuery = 
+          `SELECT
+          ura.*,
+          rt.request_type AS request_type,
+          aut.username as addressedBY,
+          rr.rejection_msg AS rejection_msg,
+          rs.status AS request_status 
+          FROM user_request_addressed ura
+          JOIN auth aut ON ura.auth_user_id = aut.auth_id 
+          JOIN request_types rt ON ura.request_type = rt.request_type_id 
+          LEFT JOIN request_rejections rr ON ura.fk_rejection_id = rr.pk_reject_id 
+          JOIN request_status rs ON ura.request_status = rs.status_id`;
+
+        
+        const conditions: string[] = [];
+      const values: any[] = [];
+
+      conditions.push(`ura.request_type = ?`);
+      values.push("3");
+      conditions.push(`ura.fk_request_id = ?`);
+      values.push(request.pk_deal_id); 
+    
+    if (conditions.length > 0) {
+      addressedQuery += ` WHERE ` + conditions.join(" AND ");
+    }
+    const [addressedData]=await connection.execute(addressedQuery,values)
+        return {
+          ...request,
+          addressedDetails: addressedData || null,
+        };
+      })
+    );
+
+    // return NextResponse.json({data:enrichedRequests})
+
+    const flatData = enrichedRequests.map((item:any,index:any) => ({
+            sr_no: index+1,
+            enquiry_id:item.dealership_id,
+            request_date:item.ucr_created_at?formatDate(item.ucr_created_at):'',
+            customer_name:item.full_name,
+            contact_no:item.alternate_contact.toString().length === 10?"91"+item.alternate_contact:item.alternate_contact,
+            pincode:item.pincode,
+            city:item.city,
+            state:item.state_address?item.state_address.charAt(0).toUpperCase()+ item.state_address.replace("_"," ").slice(1).toLowerCase():"--",
+            business_age:item.business_age,
+            shop_type:item.shop_type,
+            request_type:"Dealership Enquiry",
+            request_status:item.request_status,
+            updated_by:item.addressedDetails && item.addressedDetails.length>0 && item.addressedDetails[0].addressedBY? item.addressedDetails[0].addressedBY:"",
+            whatsapp_number:item.raised_whatsapp_no,
+            request_comments:item.addressedDetails && item.addressedDetails.length>0 && item.addressedDetails[0].comments?item.addressedDetails[0].comments:"--",
+            requst_updated_date:item.ucr_updated_at?formatDate(item.ucr_updated_at):'',
+            
+      }));
+          
+    //-----------------------Convert data to CSV
+
+    // return NextResponse.json({ status: 1, message: "Request received reference id sent to customer",data:flatData }, { status: 200 });
+
+    const csv = Papa.unparse(flatData);
+    
+
+    // ---------------------Create response with headers
+    return new NextResponse(csv, {
+        status: 200,
+        headers: {
+            "Content-Type": "text/xlsx",
+            "Content-Disposition": 'attachment; filename="data.xlsx"',
+        },
+    });
+
+}catch(e){
+  console.log("export claims exception",e);
+  
+    return funSendApiException(e)
+}
+}
+
+
+function formatDate(inputDate: string,timeZone = 'Asia/Kolkata') {
+    const date = new Date(inputDate);
+
+    const formatter = new Intl.DateTimeFormat('en-IN', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+
+    const parts = formatter.formatToParts(date);
+    const get = (type: string) => parts.find(p => p.type === type)?.value;
+    return `${get('day')}-${get('month')}-${get('year')} ${get('hour')}:${get('minute')} ${get('dayPeriod')}`;
+  }
+
+  const formatDateDDMMYYYY = (date: any, isTime = false) => {
+      if (!date) return '';
+      const parsedDate = moment(date);
+      return parsedDate.format('DD-MM-YYYY');
+    };
